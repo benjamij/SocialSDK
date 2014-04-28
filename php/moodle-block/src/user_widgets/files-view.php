@@ -3,7 +3,7 @@
 $timestamp = time();
 
 global $CFG;
-require_once $CFG->dirroot . '/blocks/ibmsbt/user_widgets/templates/ibm-sbt-files-view.php';
+require $CFG->dirroot . '/blocks/ibmsbt/user_widgets/templates/ibm-sbt-files-view.php';
 ?>
 
 <select id="ibm-sbt-files-view-list-<?php echo $timestamp; ?>" onchange="onFilesViewTypeChange<?php echo $timestamp; ?>();">
