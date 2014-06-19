@@ -19,6 +19,8 @@ package com.ibm.sbt.services.client.connections.communities;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.HashMap;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -75,6 +77,26 @@ public class CommunityServiceTest extends BaseCommunityServiceTest {
 		communityService.updateMember(community.getCommunityUuid(), newMember);
 		communityService.removeMember(community.getCommunityUuid(),
 				id);
+	}
+	
+	@Test
+	public final void testGetManyCommunities() throws Exception {
+		Integer page = new Integer(20);
+		HashMap<String, String> parameters = new HashMap<String, String>();
+		parameters.put("ps", "20");
+		parameters.put("page", page.toString());
+		EntityList<Community> communities;
+		
+		do {
+		    communities = communityService.getMyCommunities(parameters);
+		    System.out.println(communities.size());
+
+		    for (Community community : communities) {
+		        //System.out.println(community.getTitle() + " " + community.getCommunityUuid());
+		    }
+		    page++;
+		    parameters.put("page", page.toString());
+		} while (communities.size() == 20);
 	}
 
 	@After

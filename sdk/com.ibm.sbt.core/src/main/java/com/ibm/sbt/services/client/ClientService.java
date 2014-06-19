@@ -60,6 +60,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -67,6 +68,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.InputStreamEntity;
@@ -104,12 +106,15 @@ import com.ibm.commons.xml.DOMUtil;
 import com.ibm.commons.xml.XMLException;
 import com.ibm.commons.xml.util.XMIConverter;
 import com.ibm.sbt.plugin.SbtCoreLogger;
+import com.ibm.sbt.security.credential.store.CredentialStoreFactory;
 import com.ibm.sbt.service.debug.ProxyDebugUtil;
 import com.ibm.sbt.service.proxy.Proxy;
 import com.ibm.sbt.service.proxy.ProxyConfigException;
 import com.ibm.sbt.service.proxy.ProxyFactory;
+import com.ibm.sbt.services.endpoints.AbstractEndpoint;
 import com.ibm.sbt.services.endpoints.Endpoint;
 import com.ibm.sbt.services.endpoints.EndpointFactory;
+import com.ibm.sbt.services.endpoints.OAuthEndpoint;
 import com.ibm.sbt.services.util.SSLUtil;
 
 /**
@@ -1140,11 +1145,10 @@ public abstract class ClientService {
 	protected Response _xhr(HttpRequestBase httpRequestBase, Args args, Object content) throws ClientServicesException {
 		DefaultHttpClient httpClient = createHttpClient(httpRequestBase, args);
 		initialize(httpClient);
-
+		
 		// HttpClient 4.1
 		// httpClient.addRequestInterceptor(new RequestAcceptEncoding());
 		// httpClient.addResponseInterceptor(new ResponseContentEncoding());
-
 		Content reqContent = null;
 		if (content != null) {
 			if (content instanceof Content) {
@@ -1153,10 +1157,13 @@ public abstract class ClientService {
 				reqContent = createRequestContent(args, content);
 			}
 		}
-
+		
 		prepareRequest(httpClient, httpRequestBase, args, reqContent);
-
 		HttpResponse response = executeRequest(httpClient, httpRequestBase, args);
+		for (Cookie c : httpClient.getCookieStore().getCookies()) {
+			System.out.println(c.getValue());
+		}
+		System.out.println("=====");
 		return processResponse(httpClient, httpRequestBase, response, args);
 	}
 
