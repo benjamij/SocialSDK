@@ -16,11 +16,14 @@
 
 package com.ibm.sbt.services.endpoints;
 
+import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -36,10 +39,13 @@ import com.ibm.sbt.services.client.ClientService;
 import com.ibm.sbt.services.client.ClientService.Args;
 import com.ibm.sbt.services.client.ClientService.Handler;
 import com.ibm.sbt.services.client.ClientServicesException;
+import com.ibm.sbt.services.client.CookieStoreCache;
 import com.ibm.sbt.services.client.GenericService;
 import com.ibm.sbt.services.client.Response;
+import com.ibm.sbt.services.client.email.EnvironmentConfig;
 import com.ibm.sbt.services.endpoints.js.JSReference;
 import com.ibm.sbt.util.SBTException;
+import com.sun.corba.se.spi.legacy.connection.GetEndPointInfoAgainException;
 
 
 /**
@@ -72,6 +78,8 @@ public abstract class AbstractEndpoint implements Endpoint, Cloneable {
     private boolean useProxy = true;
     
     protected Map<String, Object> clientParams = new HashMap<String, Object>();
+    private static final String sourceClass = AbstractEndpoint.class.getName();
+	private static final Logger logger = Logger.getLogger(sourceClass);
     
     private int authenticationErrorCode = 401;
     
@@ -81,6 +89,9 @@ public abstract class AbstractEndpoint implements Endpoint, Cloneable {
     protected static final String PLATFORM_SAMETIME = "sametime";
     protected static final String PLATFORM_DROPBOX = "dropbox";
     protected static final String PLATFORM_TWITTER = "twitter";
+    
+    private SoftReference<CookieStore> noContextCache;
+    static final ThreadLocal<CookieStore> tl = new ThreadLocal<CookieStore>();
     
     public AbstractEndpoint() {
     }
@@ -98,6 +109,44 @@ public abstract class AbstractEndpoint implements Endpoint, Cloneable {
     @Override
     public Map<String, Object> getClientParams() {
     	return clientParams;
+    }
+    
+    /**
+     * Caches the given CookieStore: If a session exists, then we store it in the session;
+     * 
+if anonymous and no session, store cookies into request object
+if no request and no contxt (pure java) store cookies in the single soft reference
+if no request but with context, store cookie in thread local -> write warning on log
+     * 
+     * @param key
+     * @param value
+     */
+    public void setCookieStore(String key, CookieStore value) {
+    	Context ctx = Context.getUnchecked();
+    	if (ctx == null) {
+    		noContextCache = new SoftReference<CookieStore>(value);
+    	} else if(ctx.getHttpRequest() != null && ctx.getHttpRequest().getSession(false) != null) {
+    		ctx.getHttpRequest().getSession(false).putValue(key, value);
+    	} else if (ctx.getHttpRequest() == null) {
+    		tl.set(value);
+    		logger.log(new LogRecord(Level.FINEST, "storing connection state in thread local, make sure you call endpoint.evict() if you are using a custom thread pooling"));
+    	} else {
+    		CookieStoreCache.getInstance().put(key, new SoftReference<CookieStore>(value));
+    	}
+    }
+    
+    public CookieStore getCookieStore(String key) {
+    	Context ctx = Context.getUnchecked();
+    	
+    	if (ctx == null) {
+    		return noContextCache.get();
+    	} else if(ctx.getHttpRequest() != null && ctx.getHttpRequest().getSession(false) != null) {
+    		return (CookieStore) ctx.getHttpRequest().getSession(false).getValue(key);
+    	} else if (ctx.getHttpRequest() == null) {
+    		return tl.get();
+    	} 
+    	
+    	return CookieStoreCache.getInstance().get(key).get();
     }
     
     /* (non-Javadoc)

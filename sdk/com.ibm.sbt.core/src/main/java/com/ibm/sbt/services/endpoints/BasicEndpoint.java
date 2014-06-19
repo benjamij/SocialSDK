@@ -1,5 +1,5 @@
 /*
- * © Copyright IBM Corp. 2012
+ * ï¿½ Copyright IBM Corp. 2012
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
@@ -27,6 +27,7 @@ import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.auth.AuthScheme;
 import org.apache.http.auth.AuthState;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.auth.BasicSchemeFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -311,13 +312,20 @@ public class BasicEndpoint extends AbstractEndpoint {
 	public void initialize(DefaultHttpClient httpClient) throws ClientServicesException {
         String usr = getUserIdentity();
         if(StringUtil.isNotEmpty(usr)) {
-            String pwd = getPassword();
-            
-            UsernamePasswordCredentials creds = new UsernamePasswordCredentials(usr,pwd);
-            
-            HttpRequestInterceptor basicInterceptor = new BasicInterceptor(creds);
-            httpClient.addRequestInterceptor(basicInterceptor, 0);
+	        CookieStore cookieStore = getCookieStore(usr);
+	        if (cookieStore != null) {
+	        	Context ctx = Context.getUnchecked();
+	        	//ctx.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
+	        	httpClient.setCookieStore(cookieStore);
+	        } else {
+	        	String pwd = getPassword();
+	        	UsernamePasswordCredentials creds = new UsernamePasswordCredentials(usr,pwd);
+	        	HttpRequestInterceptor basicInterceptor = new BasicInterceptor(creds);
+	        	httpClient.addRequestInterceptor(basicInterceptor, 0);
+	        	setCookieStore(usr, httpClient.getCookieStore());
+	        }
         }
+        
     }
     
 
