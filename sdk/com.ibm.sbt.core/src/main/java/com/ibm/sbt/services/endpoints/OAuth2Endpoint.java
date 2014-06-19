@@ -109,6 +109,7 @@ public class OAuth2Endpoint extends AbstractEndpoint {
 			if (accesstoken != null) {
 				HttpRequestInterceptor oauthInterceptor = new OAuth2Interceptor(accesstoken);
 				httpClient.addRequestInterceptor(oauthInterceptor, 0);
+				httpClient.setCookieStore(getCookieStore(getConsumerSecret()));
 			}
 		} catch (OAuthException e) {}
 	}

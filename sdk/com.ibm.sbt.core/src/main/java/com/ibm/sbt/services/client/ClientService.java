@@ -1130,7 +1130,7 @@ public abstract class ClientService {
 			return _xhr(httpRequestBase, args, content);
 		}
 	}
-
+	
 	/**
 	 * Allows clients to override the process content section of {@link #_xhr(HttpRequestBase, Args)}. <br/>
 	 * 

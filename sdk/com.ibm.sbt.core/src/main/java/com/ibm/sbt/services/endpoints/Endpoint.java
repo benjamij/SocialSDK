@@ -1,5 +1,5 @@
 /*
- * © Copyright IBM Corp. 2012
+ * ï¿½ Copyright IBM Corp. 2012
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
@@ -15,14 +15,20 @@
  */
 package com.ibm.sbt.services.endpoints;
 
+import java.lang.ref.SoftReference;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import com.ibm.commons.runtime.Context;
 import com.ibm.sbt.security.authentication.AuthenticationException;
 import com.ibm.sbt.services.client.ClientService;
+import com.ibm.sbt.services.client.CookieStoreCache;
 import com.ibm.sbt.services.client.Response;
 import com.ibm.sbt.services.client.ClientService.Args;
 import com.ibm.sbt.services.client.ClientService.Handler;
@@ -102,6 +108,20 @@ public interface Endpoint {
      * @return true if this endpoint should use the proxy.
      */
     public boolean isUseProxy();
+    
+    /**
+     * TODO
+     * @param key
+     * @param value
+     */
+    public void setCookieStore(String key, CookieStore value);
+    
+    /**
+     * TODO
+     * @param key
+     * @return
+     */
+    public CookieStore getCookieStore(String key);
     
     /**
      * Gets the error code for authentication failure.

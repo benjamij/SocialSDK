@@ -1,5 +1,5 @@
 /*
- * © Copyright IBM Corp. 2012
+ * ï¿½ Copyright IBM Corp. 2012
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
@@ -245,11 +245,14 @@ public class OAuthEndpoint extends AbstractEndpoint {
 	@Override
 	public void initialize(DefaultHttpClient httpClient) throws ClientServicesException {
 		try {
+			String key = getConsumerSecret();
 			AccessToken token = oAuthHandler.acquireToken(false);
 			if ((token != null) && (oAuthHandler != null)) {
 				HttpRequestInterceptor oauthInterceptor = new OAuthInterceptor(token, super.getUrl(),oAuthHandler);
 				httpClient.addRequestInterceptor(oauthInterceptor, 0);
+				httpClient.setCookieStore(getCookieStore(key));
 			}
+			
 		} catch (OAuthException ex) {
 			throw new ClientServicesException(ex);
 		}
